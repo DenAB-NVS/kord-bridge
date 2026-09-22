@@ -1,0 +1,1 @@
+echo "ПРОВЕРКА ПЕТЛИ: ответ от $(hostname) в $(date '+%F %T')"; echo; uptime; echo; df -h / | tail -1; echo; free -m | sed -n 2p; echo; echo "Боты: $(pm2 jlist 2>/dev/null | grep -o '"name":"[a-z-]*"' | cut -d'"' -f4 | tr '\n' ' ')"
