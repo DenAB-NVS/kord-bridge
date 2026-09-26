@@ -1,0 +1,19 @@
+# чат-список.txt — разведка Кординапса, 26.09.2026
+# Крупные фриланс-чаты с прямыми заказчиками + датированный дайджест заказов.
+# Машина вступит по одному каждые 30 секунд.
+
+# Датированный дайджест заказов (боты, парсеры, свежие посты с ценами)
+@freelansim_ru
+
+# Крупные живые фриланс-чаты с прямыми заказчиками
+@onlayn_rabota
+@pomogator
+@frilancru
+@qwork_qwork
+@jobnonstop
+@jobospherechat
+@proffreelancee_chat
+@workk_onchat
+@freelance_birzha
+@jir_chat
+@javascript_jobs
