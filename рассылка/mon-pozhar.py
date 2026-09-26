@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# mon-pozhar.py v4 — пожарный монитор потока чатов (acc2)
-# v2: кольцо переподключения. v3: сессия из sessions/. v4: два яруса слов — пожар и спрос.
+# mon-pozhar.py v5.1 — пожарный монитор: два яруса слов + фильтр шума
+# v5: убийца шума. v5.1: +риэлторы, водители, заработки на отзывах и картах.
 
 import asyncio
 import json
@@ -16,20 +16,25 @@ SPROS = os.path.join(BASE, "спрос.txt")
 
 # Ярус 1 — пожары: тревога в Избранное + пожары.txt
 FIRE = [
-    "срочно", "горит", "пожар", "аврал",
-    "не работает", "сломал", "упал бот", "упал сервер",
-    "ошибка в", "баг", "критичн", "дедлайн",
-    "как можно скорее", "нужно до конца дня", "спасайте", "ищем разработчика",
-    "очень срочно", "сегодня до", "до конца дня", "аварийн",
-    "починить", "восстановить доступ", "потеряли доступ", "заблокировали",
+    "срочно нужен", "нужен разработчик", "нужен программист", "нужен бот",
+    "ищем разработчика", "ищу исполнителя", "кто может написать", "кто сделает",
+    "кто возьмется", "сломался бот", "упал бот", "не работает бот",
+    "нужно починить", "восстановить бота", "горит дедлайн",
+    "сегодня до", "до конца дня", "аварийн", "спасайте",
 ]
 
-# Ярус 2 — спрос: тихо в спрос.txt, без тревоги
+# Ярус 2 — спрос: тихо в спрос.txt
 WORK = [
-    "ищем программиста", "нужен программист", "нужен разработчик", "требуется разработчик",
-    "нужен бот", "чат-бот", "бот для", "заказ на разработку", "разработать бот",
-    "напишите в лс", "в личку", "фрилансер", "бюджет", "оплат", "тз",
-    "автоматизир", "интеграц", "парсер", "telegram bot", "заказчик ищет",
+    "нужен техспец", "требуется разработчик", "заказ на разработку",
+    "напишите в лс", "есть задача", "есть тз", "бюджет",
+    "разработать бот", "чат-бот", "интеграц", "парсер", "автоматизир",
+]
+
+# Фильтр шума: если совпало — молча пропускаем
+NOISE = [
+    "#помогу", "#резюме", "#ищу_работу", "купл", "баланс",
+    "набор на удал", "за отзыв", "верификац", "казино", "ставки на спор",
+    "риэлтор", "водител", "яндекс.карт", "заработок на", "документ",
 ]
 
 
@@ -51,6 +56,7 @@ def load_cfg():
 API_ID, API_HASH = load_cfg()
 client = TelegramClient(SESSION, API_ID, API_HASH)
 seen = set()
+prefixes = set()
 
 
 def ts():
@@ -63,20 +69,32 @@ async def on_msg(event):
         text = (event.raw_text or "").lower()
         if not text:
             return
+        sender = await event.get_sender()
+        uname = getattr(sender, "username", None)
+        if uname and "bot" in uname.lower():
+            return
+        if text.count("#") >= 3:
+            return
+        if any(n in text for n in NOISE):
+            return
+        pref = text[:60]
+        if pref in prefixes:
+            return
         fire = next((t for t in FIRE if t in text), None)
         work = None if fire else next((t for t in WORK if t in text), None)
         if fire is None and work is None:
             return
         chat = await event.get_chat()
-        sender = await event.get_sender()
         key = (getattr(chat, "id", None), event.id)
         if key in seen:
             return
         seen.add(key)
         if len(seen) > 500:
             seen.clear()
+        prefixes.add(pref)
+        if len(prefixes) > 2000:
+            prefixes.clear()
         chat_name = getattr(chat, "title", None) or getattr(chat, "username", None) or str(key[0])
-        uname = getattr(sender, "username", None)
         who = f"@{uname}" if uname else (getattr(sender, "first_name", "") or "?")
         snippet = (event.raw_text or "")[:200].replace("\n", " ")
         if fire:
@@ -101,9 +119,9 @@ async def main():
     await client.connect()
     if not await client.is_user_authorized():
         raise SystemExit("сессия sessions/acc2 не авторизована — проверь путь к сессии")
-    print(f"{ts()} | монитор v4 запущен, сессия: acc2 (sessions/), пожары: {len(FIRE)}, спрос: {len(WORK)}", flush=True)
+    print(f"{ts()} | монитор v5.1 запущен, сессия: acc2 (sessions/), фильтр шума: {len(NOISE)} шаблонов", flush=True)
     try:
-        await client.send_message("me", f"🔥 монитор v4 на посту ({time.strftime('%d.%m %H:%M')}): пожары — тревога, спрос — в файл")
+        await client.send_message("me", f"🔥 монитор v5.1 на посту ({time.strftime('%d.%m %H:%M')})")
     except Exception:
         pass
     await client.run_until_disconnected()
