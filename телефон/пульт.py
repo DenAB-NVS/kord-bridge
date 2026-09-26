@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # пульт.py — терминальный мост Кординапс → Termux через git-очередь
-# Слушает телефон/задания/ в клоне моста, исполняет .sh, вывод в ~/пульт/вывод,
-# rsync на сервер в ~/kord-echo/эхо-телефон/ (там его коммитит таймер kord-telefon).
+# v1.1: цикл 30 секунд вместо 60 — пожар не ждёт.
 
 import os
 import subprocess
@@ -27,7 +26,7 @@ def main():
             subprocess.run("git -C " + MOST + " pull --ff-only", shell=True,
                            capture_output=True, text=True, timeout=120)
             if not os.path.isdir(ZAD):
-                time.sleep(60)
+                time.sleep(30)
                 continue
             done = set()
             if os.path.exists(JOURNAL):
@@ -54,7 +53,7 @@ def main():
                 log("rsync не прошёл: " + (rs.stderr or "")[:200])
         except Exception as e:
             log("ошибка цикла: " + str(e))
-        time.sleep(60)
+        time.sleep(30)
 
 
 if __name__ == "__main__":
