@@ -1,11 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Кординапс — цикл моста: задания из очереди -> исполнение -> эхо
+# Кординапс — цикл моста v2 (телефон)
+# Рука выполняет ТОЛЬКО телефон/задания/ — очередь/ принадлежит серверу.
+# Будильник каждый цикл, эхо напрямую в GitHub.
 BRIDGE="$HOME/kord-bridge"
 ECHO="$HOME/kord-echo"
 DONE="$HOME/kord-vypolneno.txt"
 TS="$(date +%Y-%m-%d_%H-%M-%S)"
 
 touch "$DONE"
+command -v termux-wake-lock >/dev/null 2>&1 && termux-wake-lock
 
 if [ -d "$BRIDGE/.git" ]; then
   git -C "$BRIDGE" fetch origin >/dev/null 2>&1
@@ -24,8 +27,8 @@ mkdir -p "$ECHO/эхо"
   echo
 } > "$OUT"
 
-if [ -d "$BRIDGE/очередь" ]; then
-  for z in "$BRIDGE"/очередь/*.sh; do
+if [ -d "$BRIDGE/телефон/задания" ]; then
+  for z in "$BRIDGE"/телефон/задания/*.sh; do
     [ -e "$z" ] || continue
     name="$(basename "$z")"
     grep -qxF "$name" "$DONE" && continue
@@ -44,5 +47,6 @@ if [ -d "$ECHO/.git" ]; then
   cd "$ECHO" || exit 0
   git add -A >/dev/null 2>&1
   git commit -m "эхо $TS" >/dev/null 2>&1
+  git pull --rebase >/dev/null 2>&1
   git push >/dev/null 2>&1
 fi
